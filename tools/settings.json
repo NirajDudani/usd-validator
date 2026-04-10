@@ -1,0 +1,8 @@
+{
+  "file_size_check": {
+    "enabled": true,
+    "warn_threshold": 50.0,
+    "error_threshold": 100.0,
+    "unit": "MB"
+  }
+}
