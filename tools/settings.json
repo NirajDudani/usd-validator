@@ -4,5 +4,9 @@
     "warn_threshold": 50.0,
     "error_threshold": 100.0,
     "unit": "MB"
+  },
+  "default_prim_check": {
+    "enabled": true,
+    "expected_type": "Xform"
   }
 }

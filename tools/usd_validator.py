@@ -11,6 +11,8 @@ from PySide6 import QtWidgets, QtCore, QtGui
 
 from ui.styles import STYLESHEET
 from ui.settings_dialog import SettingsDialog
+from validators.file_size import check_file_size
+from validators.default_prim import check_default_prim
 
 SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "settings.json")
 
@@ -20,7 +22,11 @@ DEFAULT_SETTINGS = {
         "warn_threshold": 50.0,
         "error_threshold": 200.0,
         "unit": "MB",
-    }
+    },
+    "default_prim_check": {
+        "enabled": True,
+        "expected_type": "Xform",
+    },
 }
 
 
@@ -247,7 +253,11 @@ class USDValidator(QtWidgets.QMainWindow):
             details=[]
         )
 
-        self.check_file_size()
+        for name, status, msg in check_file_size(self.current_file, self.settings):
+            self.add_result(check_name=name, status=status, message=msg)
+
+        for name, status, msg in check_default_prim(self.stage, self.settings):
+            self.add_result(check_name=name, status=status, message=msg)
 
         # Update summary
         self.update_summary()
@@ -256,58 +266,6 @@ class USDValidator(QtWidgets.QMainWindow):
         self.export_btn.setEnabled(True)
 
         self.status_bar.showMessage("Validation complete")
-
-    def check_file_size(self):
-        fsc = self.settings["file_size_check"]
-
-        if not fsc["enabled"]:
-            return
-
-        if not self.current_file or not os.path.exists(self.current_file):
-            self.add_result(
-                check_name="File Size",
-                status="error",
-                message="File path unavailable — cannot check size"
-            )
-            return
-
-        try:
-            size_bytes = os.path.getsize(self.current_file)
-        except OSError as e:
-            self.add_result(
-                check_name="File Size",
-                status="error",
-                message=f"Could not read file size: {e}"
-            )
-            return
-
-        unit = fsc["unit"]
-        unit_divisors = {"MB": 1024 ** 2, "GB": 1024 ** 3}
-        divisor = unit_divisors.get(unit)
-        if divisor is None:
-            self.add_result(
-                check_name="File Size",
-                status="error",
-                message=f"Unknown file size unit in settings: '{unit}'"
-            )
-            return
-
-        size = size_bytes / divisor
-        warn = fsc["warn_threshold"]
-        error = fsc["error_threshold"]
-
-        if size >= error:
-            status = "error"
-        elif size >= warn:
-            status = "warning"
-        else:
-            status = "pass"
-
-        self.add_result(
-            check_name="File Size",
-            status=status,
-            message=f"{size:.1f} {unit} (warn: {warn} {unit}, error: {error} {unit})"
-        )
 
     # ─────────────────────────────────────────────
     # RESULTS DISPLAY
