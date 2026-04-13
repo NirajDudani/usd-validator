@@ -13,6 +13,7 @@ from ui.styles import STYLESHEET
 from ui.settings_dialog import SettingsDialog
 from validators.file_size import check_file_size
 from validators.default_prim import check_default_prim
+from validators.naming_convention import check_naming_convention
 
 SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "settings.json")
 
@@ -26,6 +27,25 @@ DEFAULT_SETTINGS = {
     "default_prim_check": {
         "enabled": True,
         "expected_type": "Xform",
+    },
+    "naming_check": {
+        "enabled": True,
+        "check_chars": True,
+        "check_patterns": True,
+        "check_reserved": True,
+        "check_consistency": True,
+        "illegal_characters": "",
+        "max_name_length": 128,
+        "style": None,
+        "prim_type_prefixes": {
+            "Mesh": ["GEO_"],
+            "Material": ["MAT_"],
+            "Scope": ["GRP_"],
+        },
+        "reserved_names": [
+            "default", "class", "material", "geometry",
+            "xform", "scope", "mesh", "camera",
+        ],
     },
 }
 
@@ -257,6 +277,9 @@ class USDValidator(QtWidgets.QMainWindow):
             self.add_result(check_name=name, status=status, message=msg)
 
         for name, status, msg in check_default_prim(self.stage, self.settings):
+            self.add_result(check_name=name, status=status, message=msg)
+
+        for name, status, msg in check_naming_convention(self.stage, self.settings):
             self.add_result(check_name=name, status=status, message=msg)
 
         # Update summary

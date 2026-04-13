@@ -32,6 +32,7 @@ class SettingsDialog(QtWidgets.QDialog):
         # ── Register categories (each _build_* adds one row to _list and one page to _stack) ──
         self._build_file_size_check(settings.get("file_size_check", {}))
         self._build_default_prim_check(settings.get("default_prim_check", {}))
+        self._build_naming_check(settings.get("naming_check", {}))
 
         # Select first item by default
         self._list.currentRowChanged.connect(self._stack.setCurrentIndex)
@@ -106,6 +107,66 @@ class SettingsDialog(QtWidgets.QDialog):
         self._list.addItem("Default Prim")
         self._stack.addWidget(page)
 
+    def _build_naming_check(self, nc):
+        """Create the Naming Check settings page and register it."""
+        # Store JSON-only keys so get_settings() can round-trip them unchanged.
+        self._nc_extra = {
+            k: v for k, v in nc.items()
+            if k not in ("enabled", "check_chars", "check_patterns", "check_reserved", "check_consistency")
+        }
+
+        page = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(page)
+        form.setContentsMargins(16, 16, 16, 16)
+        form.setSpacing(10)
+
+        self.nc_enabled_cb = QtWidgets.QCheckBox("Enable naming check")
+        self.nc_enabled_cb.setChecked(nc.get("enabled", True))
+        form.addRow(self.nc_enabled_cb)
+
+        self.nc_chars_cb = QtWidgets.QCheckBox("Check illegal characters & format")
+        self.nc_chars_cb.setChecked(nc.get("check_chars", True))
+        self.nc_chars_cb.setToolTip(
+            "Flags prim names that contain spaces, special characters,\n"
+            "or start with a digit — USD only allows letters, digits, and underscores."
+        )
+        form.addRow(self.nc_chars_cb)
+
+        self.nc_patterns_cb = QtWidgets.QCheckBox("Check prefix/suffix patterns")
+        self.nc_patterns_cb.setChecked(nc.get("check_patterns", True))
+        self.nc_patterns_cb.setToolTip(
+            "Checks that each prim type matches its required prefix or suffix.\n"
+            "e.g. Mesh prims must start with GEO_, Materials with MAT_."
+        )
+        form.addRow(self.nc_patterns_cb)
+
+        self.nc_reserved_cb = QtWidgets.QCheckBox("Check reserved names")
+        self.nc_reserved_cb.setChecked(nc.get("check_reserved", True))
+        self.nc_reserved_cb.setToolTip(
+            "Warns when a prim uses a reserved word as its name\n"
+            "(e.g. 'default', 'material', 'mesh') which can cause USD conflicts."
+        )
+        form.addRow(self.nc_reserved_cb)
+
+        self.nc_consistency_cb = QtWidgets.QCheckBox("Check casing consistency")
+        self.nc_consistency_cb.setChecked(nc.get("check_consistency", True))
+        self.nc_consistency_cb.setToolTip(
+            "Ensures all prim names in the scene follow the same casing style\n"
+            "(e.g. all snake_case or all CamelCase — no mixing)."
+        )
+        form.addRow(self.nc_consistency_cb)
+
+        # Disable sub-checks when master is unchecked
+        for cb in (self.nc_chars_cb, self.nc_patterns_cb, self.nc_reserved_cb, self.nc_consistency_cb):
+            cb.setEnabled(self.nc_enabled_cb.isChecked())
+        self.nc_enabled_cb.toggled.connect(self.nc_chars_cb.setEnabled)
+        self.nc_enabled_cb.toggled.connect(self.nc_patterns_cb.setEnabled)
+        self.nc_enabled_cb.toggled.connect(self.nc_reserved_cb.setEnabled)
+        self.nc_enabled_cb.toggled.connect(self.nc_consistency_cb.setEnabled)
+
+        self._list.addItem("Naming Check")
+        self._stack.addWidget(page)
+
     def get_settings(self):
         return {
             "file_size_check": {
@@ -117,6 +178,14 @@ class SettingsDialog(QtWidgets.QDialog):
             "default_prim_check": {
                 "enabled": self.dpc_enabled_cb.isChecked(),
                 "expected_type": self.dpc_type_combo.currentText(),
+            },
+            "naming_check": {
+                **self._nc_extra,
+                "enabled": self.nc_enabled_cb.isChecked(),
+                "check_chars": self.nc_chars_cb.isChecked(),
+                "check_patterns": self.nc_patterns_cb.isChecked(),
+                "check_reserved": self.nc_reserved_cb.isChecked(),
+                "check_consistency": self.nc_consistency_cb.isChecked(),
             },
         }
 

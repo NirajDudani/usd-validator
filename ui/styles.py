@@ -101,6 +101,18 @@ STYLESHEET = f"""
         background-color: #ffffff;
         image: url("{_CHECK_ICON}");
     }}
+    QCheckBox:disabled {{
+        color: #aaaaaa;
+    }}
+    QCheckBox::indicator:disabled {{
+        border-color: #cccccc;
+        background-color: #f0f0f0;
+    }}
+    QCheckBox::indicator:checked:disabled {{
+        border-color: #cccccc;
+        background-color: #f0f0f0;
+        image: none;
+    }}
     QStatusBar {{
         background-color: #0078d4;
         color: white;

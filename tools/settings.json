@@ -8,5 +8,36 @@
   "default_prim_check": {
     "enabled": true,
     "expected_type": "Xform"
+  },
+  "naming_check": {
+    "illegal_characters": "",
+    "max_name_length": 128,
+    "style": null,
+    "prim_type_prefixes": {
+      "Mesh": [
+        "GEO_"
+      ],
+      "Material": [
+        "MAT_"
+      ],
+      "Scope": [
+        "GRP_"
+      ]
+    },
+    "reserved_names": [
+      "default",
+      "class",
+      "material",
+      "geometry",
+      "xform",
+      "scope",
+      "mesh",
+      "camera"
+    ],
+    "enabled": true,
+    "check_chars": true,
+    "check_patterns": true,
+    "check_reserved": true,
+    "check_consistency": true
   }
 }
