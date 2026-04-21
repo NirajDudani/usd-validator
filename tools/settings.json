@@ -9,6 +9,28 @@
     "enabled": true,
     "expected_type": "Xform"
   },
+  "broken_references": {
+    "enabled": true,
+    "enabled_checks": {
+      "external_references": true,
+      "internal_references": true,
+      "asset_paths": true,
+      "unresolvable_paths": true
+    },
+    "additional_search_paths": [],
+    "ignore_patterns": []
+  },
+  "required_metadata": {
+    "enabled": true,
+    "enabled_checks": {
+      "up_axis": true,
+      "meters_per_unit": true,
+      "custom_metadata": true
+    },
+    "valid_up_axis": ["Y", "Z"],
+    "valid_meters_per_unit": [0.001, 0.01, 0.1, 1.0],
+    "required_custom_fields": []
+  },
   "naming_check": {
     "illegal_characters": "",
     "max_name_length": 128,

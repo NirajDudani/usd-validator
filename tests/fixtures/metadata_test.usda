@@ -1,0 +1,22 @@
+#usda 1.0
+(
+    # upAxis is intentionally omitted → triggers ERROR: "Stage is missing 'upAxis' metadata"
+    metersPerUnit = 100
+    # metersPerUnit = 100 is non-standard → triggers WARNING: "Stage 'metersPerUnit' is 100, expected one of: 0.001, 0.01, 0.1, 1.0"
+    customLayerData = {
+        string asset_version = "1.0"
+        # 'author' and 'department' are absent — add them to required_custom_fields in
+        # settings.json to see WARNING: "Stage is missing required custom metadata: 'author'"
+    }
+    doc = "Test fixture for required_metadata validator. Expected results with default settings:
+  ERROR   — upAxis missing
+  WARNING — metersPerUnit is 100 (non-standard)
+  PASS    — custom metadata (required_custom_fields is empty by default)"
+)
+
+def Xform "World"
+{
+    def Mesh "GEO_sphere"
+    {
+    }
+}

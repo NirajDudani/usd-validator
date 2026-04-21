@@ -1,0 +1,38 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    upAxis = "Y"
+    metersPerUnit = 1.0
+    # Clean fixture — all references and asset paths resolve correctly.
+    # Expected: Broken References → PASS
+)
+
+def Xform "World"
+{
+    # External reference to props/chair.usda — file exists, defaultPrim /Chair is valid
+    def Xform "chair" (
+        references = @./props/chair.usda@
+    )
+    {
+    }
+
+    # External reference with explicit prim path — /Chair exists in chair.usda
+    def Xform "chair_explicit" (
+        references = @./props/chair.usda@</Chair>
+    )
+    {
+    }
+
+    # Internal reference to a prim that exists in this file
+    def Xform "prop_b" (
+        references = </World/chair>
+    )
+    {
+    }
+
+    # Asset path attribute pointing to an existing file
+    def Xform "wood_prop"
+    {
+        custom asset diffuseTexture = @./textures/wood_diffuse.png@
+    }
+}

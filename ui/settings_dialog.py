@@ -32,6 +32,8 @@ class SettingsDialog(QtWidgets.QDialog):
         # ── Register categories (each _build_* adds one row to _list and one page to _stack) ──
         self._build_file_size_check(settings.get("file_size_check", {}))
         self._build_default_prim_check(settings.get("default_prim_check", {}))
+        self._build_required_metadata_check(settings.get("required_metadata", {}))
+        self._build_broken_references_check(settings.get("broken_references", {}))
         self._build_naming_check(settings.get("naming_check", {}))
 
         # Select first item by default
@@ -107,6 +109,113 @@ class SettingsDialog(QtWidgets.QDialog):
         self._list.addItem("Default Prim")
         self._stack.addWidget(page)
 
+    def _build_required_metadata_check(self, rmc):
+        """Create the Required Metadata settings page and register it."""
+        self._rmc_extra = {
+            k: v for k, v in rmc.items()
+            if k not in ("enabled", "enabled_checks")
+        }
+
+        page = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(page)
+        form.setContentsMargins(16, 16, 16, 16)
+        form.setSpacing(10)
+
+        self.rmc_enabled_cb = QtWidgets.QCheckBox("Enable required metadata check")
+        self.rmc_enabled_cb.setChecked(rmc.get("enabled", True))
+        form.addRow(self.rmc_enabled_cb)
+
+        enabled_checks = rmc.get("enabled_checks", {})
+
+        self.rmc_up_axis_cb = QtWidgets.QCheckBox("Check upAxis")
+        self.rmc_up_axis_cb.setChecked(enabled_checks.get("up_axis", True))
+        self.rmc_up_axis_cb.setToolTip(
+            "Verify the stage has a valid up axis set (Y or Z). "
+            "Prevents assets opening sideways in other tools."
+        )
+        form.addRow(self.rmc_up_axis_cb)
+
+        self.rmc_mpu_cb = QtWidgets.QCheckBox("Check metersPerUnit")
+        self.rmc_mpu_cb.setChecked(enabled_checks.get("meters_per_unit", True))
+        self.rmc_mpu_cb.setToolTip(
+            "Verify the stage has a standard units scale. "
+            "Prevents assets appearing at wrong size."
+        )
+        form.addRow(self.rmc_mpu_cb)
+
+        self.rmc_custom_cb = QtWidgets.QCheckBox("Check custom metadata fields")
+        self.rmc_custom_cb.setChecked(enabled_checks.get("custom_metadata", True))
+        self.rmc_custom_cb.setToolTip(
+            "Check for studio-required metadata fields like asset version or author name."
+        )
+        form.addRow(self.rmc_custom_cb)
+
+        for cb in (self.rmc_up_axis_cb, self.rmc_mpu_cb, self.rmc_custom_cb):
+            cb.setEnabled(self.rmc_enabled_cb.isChecked())
+        self.rmc_enabled_cb.toggled.connect(self.rmc_up_axis_cb.setEnabled)
+        self.rmc_enabled_cb.toggled.connect(self.rmc_mpu_cb.setEnabled)
+        self.rmc_enabled_cb.toggled.connect(self.rmc_custom_cb.setEnabled)
+
+        self._list.addItem("Required Metadata")
+        self._stack.addWidget(page)
+
+    def _build_broken_references_check(self, brc):
+        """Create the Broken References settings page and register it."""
+        self._brc_extra = {
+            k: v for k, v in brc.items()
+            if k not in ("enabled", "enabled_checks")
+        }
+
+        page = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(page)
+        form.setContentsMargins(16, 16, 16, 16)
+        form.setSpacing(10)
+
+        self.brc_enabled_cb = QtWidgets.QCheckBox("Enable broken references check")
+        self.brc_enabled_cb.setChecked(brc.get("enabled", True))
+        form.addRow(self.brc_enabled_cb)
+
+        enabled_checks = brc.get("enabled_checks", {})
+
+        self.brc_ext_cb = QtWidgets.QCheckBox("Check external references")
+        self.brc_ext_cb.setChecked(enabled_checks.get("external_references", True))
+        self.brc_ext_cb.setToolTip(
+            "Check that all referenced USD files exist on disk and contain the expected prims."
+        )
+        form.addRow(self.brc_ext_cb)
+
+        self.brc_int_cb = QtWidgets.QCheckBox("Check internal references")
+        self.brc_int_cb.setChecked(enabled_checks.get("internal_references", True))
+        self.brc_int_cb.setToolTip(
+            "Check that references to prims within the same file point to prims that exist."
+        )
+        form.addRow(self.brc_int_cb)
+
+        self.brc_asset_cb = QtWidgets.QCheckBox("Check asset paths")
+        self.brc_asset_cb.setChecked(enabled_checks.get("asset_paths", True))
+        self.brc_asset_cb.setToolTip(
+            "Check that texture, audio, and other asset file paths point to files that exist."
+        )
+        form.addRow(self.brc_asset_cb)
+
+        self.brc_env_cb = QtWidgets.QCheckBox("Check unresolvable paths")
+        self.brc_env_cb.setChecked(enabled_checks.get("unresolvable_paths", True))
+        self.brc_env_cb.setToolTip(
+            "Flag paths with environment variables or search paths that cannot be resolved."
+        )
+        form.addRow(self.brc_env_cb)
+
+        sub_cbs = (self.brc_ext_cb, self.brc_int_cb, self.brc_asset_cb, self.brc_env_cb)
+        for cb in sub_cbs:
+            cb.setEnabled(self.brc_enabled_cb.isChecked())
+        self.brc_enabled_cb.toggled.connect(self.brc_ext_cb.setEnabled)
+        self.brc_enabled_cb.toggled.connect(self.brc_int_cb.setEnabled)
+        self.brc_enabled_cb.toggled.connect(self.brc_asset_cb.setEnabled)
+        self.brc_enabled_cb.toggled.connect(self.brc_env_cb.setEnabled)
+
+        self._list.addItem("Broken References")
+        self._stack.addWidget(page)
+
     def _build_naming_check(self, nc):
         """Create the Naming Check settings page and register it."""
         # Store JSON-only keys so get_settings() can round-trip them unchanged.
@@ -178,6 +287,25 @@ class SettingsDialog(QtWidgets.QDialog):
             "default_prim_check": {
                 "enabled": self.dpc_enabled_cb.isChecked(),
                 "expected_type": self.dpc_type_combo.currentText(),
+            },
+            "required_metadata": {
+                **self._rmc_extra,
+                "enabled": self.rmc_enabled_cb.isChecked(),
+                "enabled_checks": {
+                    "up_axis": self.rmc_up_axis_cb.isChecked(),
+                    "meters_per_unit": self.rmc_mpu_cb.isChecked(),
+                    "custom_metadata": self.rmc_custom_cb.isChecked(),
+                },
+            },
+            "broken_references": {
+                **self._brc_extra,
+                "enabled": self.brc_enabled_cb.isChecked(),
+                "enabled_checks": {
+                    "external_references": self.brc_ext_cb.isChecked(),
+                    "internal_references": self.brc_int_cb.isChecked(),
+                    "asset_paths": self.brc_asset_cb.isChecked(),
+                    "unresolvable_paths": self.brc_env_cb.isChecked(),
+                },
             },
             "naming_check": {
                 **self._nc_extra,

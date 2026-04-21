@@ -1,0 +1,17 @@
+#usda 1.0
+(
+    defaultPrim = "Chair"
+    upAxis = "Y"
+    metersPerUnit = 1.0
+)
+
+def Xform "Chair"
+{
+    def Mesh "GEO_seat"
+    {
+    }
+
+    def Mesh "GEO_back"
+    {
+    }
+}

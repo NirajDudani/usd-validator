@@ -1,0 +1,57 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    upAxis = "Y"
+    metersPerUnit = 1.0
+    # Broken fixture — intentionally contains various broken references.
+    # Expected results with default settings:
+    #   ERROR   — /World/missing_prop: reference file not found: './props/missing.usd'
+    #   ERROR   — /World/chair_wrong_prim: reference prim '/WrongPrim' not found in './props/chair.usda'
+    #   ERROR   — /World/internal_broken: internal reference prim '/NonExistent/Prim' not found
+    #   WARNING — /World/env_ref: reference path '${UNSET_VAR_XYZABC}/chair.usd' could not be resolved
+    #   WARNING — /World/broken_asset_prop.diffuseTexture: asset path not found: './textures/missing_texture.png'
+)
+
+def Xform "World"
+{
+    # ERROR: file does not exist on disk
+    def Xform "missing_prop" (
+        references = @./props/missing.usd@
+    )
+    {
+    }
+
+    # ERROR: file exists but prim /WrongPrim is not defined inside it
+    def Xform "chair_wrong_prim" (
+        references = @./props/chair.usda@</WrongPrim>
+    )
+    {
+    }
+
+    # ERROR: internal reference — /NonExistent/Prim is not defined anywhere in this file
+    def Xform "internal_broken" (
+        references = </NonExistent/Prim>
+    )
+    {
+    }
+
+    # WARNING: env var ${UNSET_VAR_XYZABC} is not set, path cannot be resolved
+    def Xform "env_ref" (
+        references = @${UNSET_VAR_XYZABC}/chair.usd@
+    )
+    {
+    }
+
+    # WARNING: asset attribute path points to a file that does not exist
+    def Xform "broken_asset_prop"
+    {
+        custom asset diffuseTexture = @./textures/missing_texture.png@
+    }
+
+    # PASS: valid reference included for contrast
+    def Xform "valid_chair" (
+        references = @./props/chair.usda@
+    )
+    {
+    }
+}

@@ -14,6 +14,8 @@ from ui.settings_dialog import SettingsDialog
 from validators.file_size import check_file_size
 from validators.default_prim import check_default_prim
 from validators.naming_convention import check_naming_convention
+from validators.required_metadata import check_required_metadata
+from validators.broken_references import check_broken_references
 
 SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "settings.json")
 
@@ -27,6 +29,28 @@ DEFAULT_SETTINGS = {
     "default_prim_check": {
         "enabled": True,
         "expected_type": "Xform",
+    },
+    "broken_references": {
+        "enabled": True,
+        "enabled_checks": {
+            "external_references": True,
+            "internal_references": True,
+            "asset_paths": True,
+            "unresolvable_paths": True,
+        },
+        "additional_search_paths": [],
+        "ignore_patterns": [],
+    },
+    "required_metadata": {
+        "enabled": True,
+        "enabled_checks": {
+            "up_axis": True,
+            "meters_per_unit": True,
+            "custom_metadata": True,
+        },
+        "valid_up_axis": ["Y", "Z"],
+        "valid_meters_per_unit": [0.001, 0.01, 0.1, 1.0],
+        "required_custom_fields": [],
     },
     "naming_check": {
         "enabled": True,
@@ -277,6 +301,12 @@ class USDValidator(QtWidgets.QMainWindow):
             self.add_result(check_name=name, status=status, message=msg)
 
         for name, status, msg in check_default_prim(self.stage, self.settings):
+            self.add_result(check_name=name, status=status, message=msg)
+
+        for name, status, msg in check_required_metadata(self.stage, self.settings):
+            self.add_result(check_name=name, status=status, message=msg)
+
+        for name, status, msg in check_broken_references(self.stage, self.settings):
             self.add_result(check_name=name, status=status, message=msg)
 
         for name, status, msg in check_naming_convention(self.stage, self.settings):
