@@ -11,6 +11,7 @@ from PySide6 import QtWidgets, QtCore, QtGui
 
 from ui.styles import STYLESHEET
 from ui.settings_dialog import SettingsDialog
+from ui.export import export_report
 from validators.file_size import check_file_size
 from validators.default_prim import check_default_prim
 from validators.naming_convention import check_naming_convention
@@ -443,11 +444,7 @@ class USDValidator(QtWidgets.QMainWindow):
     # ─────────────────────────────────────────────
 
     def export_report(self):
-        QtWidgets.QMessageBox.information(
-            self,
-            "Export",
-            "Export coming in Day 8!"
-        )
+        export_report(self, self.results_tree, self.current_file)
 
 
     # ─────────────────────────────────────────────
