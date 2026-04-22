@@ -12,7 +12,7 @@ A desktop tool for validating OpenUSD assets against pipeline standards. Built w
 - Run seven independent validators in one click
 - Filter results by status (All / Errors / Warnings / Passed)
 - Per-validator settings with a live dialog — no config file editing required
-- Export report (coming soon)
+- Export results as a **PDF report** or **CSV spreadsheet**
 
 ---
 
@@ -37,9 +37,10 @@ All validators are individually toggleable. Sub-checks within each validator can
 - Python 3.10+
 - [OpenUSD](https://openusd.org/release/index.html) Python bindings (`pxr`)
 - PySide6
+- reportlab *(PDF export only)*
 
 ```bash
-pip install PySide6
+pip install PySide6 reportlab
 ```
 
 OpenUSD must be installed separately. Follow the [official build instructions](https://openusd.org/release/index.html) or install a pre-built package for your platform.
@@ -83,6 +84,7 @@ src/
 │   └── naming_convention.py
 ├── ui/
 │   ├── settings_dialog.py    # Settings dialog (PySide6)
+│   ├── export.py             # PDF and CSV export logic
 │   └── styles.py             # Application stylesheet
 └── tests/
     ├── fixtures/             # .usda files used by reference tests
@@ -92,6 +94,23 @@ src/
     ├── test_naming_convention.py
     └── test_required_metadata.py
 ```
+
+---
+
+## Exporting results
+
+After running validation, click **Export Report** to save results to disk. A file save dialog lets you choose the location, filename, and format.
+
+### PDF
+A formatted report suitable for sharing with a supervisor or client. Includes:
+- Tool version and timestamp in the header
+- File path, file size, and validation time
+- Summary of total errors, warnings, and passed checks
+- Full results table with color-coded rows (red / amber / green) matching what you see in the UI
+- Generated-on footer
+
+### CSV
+A raw data file for use in pipeline scripts or spreadsheets. Columns: `Check`, `Status`, `Details`, `File`, `Timestamp`. The file path and timestamp are included on every row so the export is self-contained when opened later.
 
 ---
 
