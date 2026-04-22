@@ -10,6 +10,9 @@ def check_default_prim(stage, settings):
     prim = stage.GetDefaultPrim()
 
     if not prim.IsValid():
+        default_prim_name = stage.GetRootLayer().defaultPrim
+        if default_prim_name:
+            return [("Default Prim", "error", f"Default prim '{default_prim_name}' not found in stage")]
         return [("Default Prim", "error", "No default prim is set")]
 
     prim_path = str(prim.GetPath())

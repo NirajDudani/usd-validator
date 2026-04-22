@@ -16,6 +16,8 @@ from validators.default_prim import check_default_prim
 from validators.naming_convention import check_naming_convention
 from validators.required_metadata import check_required_metadata
 from validators.broken_references import check_broken_references
+from validators.duplicate_names import check_duplicate_names
+from validators.empty_prims import check_empty_prims
 
 SETTINGS_FILE = os.path.join(os.path.dirname(__file__), "settings.json")
 
@@ -29,6 +31,16 @@ DEFAULT_SETTINGS = {
     "default_prim_check": {
         "enabled": True,
         "expected_type": "Xform",
+    },
+    "duplicate_names": {
+        "enabled": True,
+        "enabled_checks": {
+            "exact_siblings": True,
+            "case_siblings": True,
+            "cross_branch": True,
+        },
+        "cross_branch_threshold": 3,
+        "ignore_names": ["geo", "mtl", "rig"],
     },
     "broken_references": {
         "enabled": True,
@@ -51,6 +63,15 @@ DEFAULT_SETTINGS = {
         "valid_up_axis": ["Y", "Z"],
         "valid_meters_per_unit": [0.001, 0.01, 0.1, 1.0],
         "required_custom_fields": [],
+    },
+    "empty_prims": {
+        "enabled": True,
+        "enabled_checks": {
+            "empty_xform_scope": True,
+            "empty_mesh": True,
+            "empty_hierarchy": True,
+        },
+        "ignore_types": ["Camera", "Light"],
     },
     "naming_check": {
         "enabled": True,
@@ -307,6 +328,12 @@ class USDValidator(QtWidgets.QMainWindow):
             self.add_result(check_name=name, status=status, message=msg)
 
         for name, status, msg in check_broken_references(self.stage, self.settings):
+            self.add_result(check_name=name, status=status, message=msg)
+
+        for name, status, msg in check_duplicate_names(self.stage, self.settings):
+            self.add_result(check_name=name, status=status, message=msg)
+
+        for name, status, msg in check_empty_prims(self.stage, self.settings):
             self.add_result(check_name=name, status=status, message=msg)
 
         for name, status, msg in check_naming_convention(self.stage, self.settings):

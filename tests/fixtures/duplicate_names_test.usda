@@ -1,0 +1,79 @@
+#usda 1.0
+(
+    defaultPrim = "World"
+    upAxis = "Y"
+    metersPerUnit = 1.0
+    # Fixture for manual end-to-end verification of the duplicate names check.
+    # Expected results with default settings (threshold=3, ignore=["geo","mtl","rig"]):
+    #
+    #   ERROR   — /World: prim names 'GEO_Body' and 'GEO_body' differ only by case
+    #   WARNING — GEO_head appears in 3 locations: /World/hero/GEO_head,
+    #             /World/villain/GEO_head, /World/npc/GEO_head
+    #   WARNING — GEO_arm appears in 3 locations: /World/hero/GEO_arm,
+    #             /World/villain/GEO_arm, /World/npc/GEO_arm
+    #   PASS    — GEO_unique (only 2 occurrences, below threshold)
+    #   PASS    — geo/geo parent-child same name (geo is in ignore_names)
+    #   PASS    — no exact sibling duplicates (USD prevents them)
+)
+
+def Xform "World"
+{
+    # ── Case-only sibling collision (ERROR) ──────────────────────────────────
+    # GEO_body and GEO_Body are separate USD prims (USD is case-sensitive),
+    # but they collide on Windows file systems and confuse artists.
+    def Mesh "GEO_body"
+    {
+    }
+
+    def Mesh "GEO_Body"
+    {
+    }
+
+    # ── Cross-branch duplicates above threshold (WARNING) ────────────────────
+    # GEO_head and GEO_arm each appear 3 times across different character
+    # branches, hitting the default cross_branch_threshold of 3.
+    def Xform "hero"
+    {
+        def Mesh "GEO_head" {}
+        def Mesh "GEO_arm"  {}
+    }
+
+    def Xform "villain"
+    {
+        def Mesh "GEO_head" {}
+        def Mesh "GEO_arm"  {}
+    }
+
+    def Xform "npc"
+    {
+        def Mesh "GEO_head" {}
+        def Mesh "GEO_arm"  {}
+    }
+
+    # ── Cross-branch below threshold (PASS) ──────────────────────────────────
+    # GEO_unique appears in only 2 branches — below the threshold of 3.
+    def Xform "hero_extra"
+    {
+        def Mesh "GEO_unique" {}
+    }
+
+    def Xform "villain_extra"
+    {
+        def Mesh "GEO_unique" {}
+    }
+
+    # ── Parent-child same name (PASS) ────────────────────────────────────────
+    # A prim named "geo" with a child also named "geo" is explicitly allowed
+    # per spec ("Same name at different levels of hierarchy is fine").
+    # Also: "geo" is in the ignore_names list, so it is skipped for cross-branch.
+    def Xform "geo"
+    {
+        def Xform "geo" {}
+    }
+
+    # ── Ignored structural names (PASS) ──────────────────────────────────────
+    # "mtl" appears 3+ times but is in ignore_names, so it is skipped.
+    def Xform "char_a" { def Scope "mtl" {} }
+    def Xform "char_b" { def Scope "mtl" {} }
+    def Xform "char_c" { def Scope "mtl" {} }
+}

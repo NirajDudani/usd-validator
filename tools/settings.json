@@ -9,6 +9,16 @@
     "enabled": true,
     "expected_type": "Xform"
   },
+  "duplicate_names": {
+    "enabled": true,
+    "enabled_checks": {
+      "exact_siblings": true,
+      "case_siblings": true,
+      "cross_branch": true
+    },
+    "cross_branch_threshold": 3,
+    "ignore_names": ["geo", "mtl", "rig"]
+  },
   "broken_references": {
     "enabled": true,
     "enabled_checks": {
@@ -30,6 +40,15 @@
     "valid_up_axis": ["Y", "Z"],
     "valid_meters_per_unit": [0.001, 0.01, 0.1, 1.0],
     "required_custom_fields": []
+  },
+  "empty_prims": {
+    "enabled": true,
+    "enabled_checks": {
+      "empty_xform_scope": true,
+      "empty_mesh": true,
+      "empty_hierarchy": true
+    },
+    "ignore_types": ["Camera", "Light"]
   },
   "naming_check": {
     "illegal_characters": "",

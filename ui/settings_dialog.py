@@ -34,6 +34,8 @@ class SettingsDialog(QtWidgets.QDialog):
         self._build_default_prim_check(settings.get("default_prim_check", {}))
         self._build_required_metadata_check(settings.get("required_metadata", {}))
         self._build_broken_references_check(settings.get("broken_references", {}))
+        self._build_duplicate_names_check(settings.get("duplicate_names", {}))
+        self._build_empty_prims_check(settings.get("empty_prims", {}))
         self._build_naming_check(settings.get("naming_check", {}))
 
         # Select first item by default
@@ -216,6 +218,109 @@ class SettingsDialog(QtWidgets.QDialog):
         self._list.addItem("Broken References")
         self._stack.addWidget(page)
 
+    def _build_duplicate_names_check(self, dnc):
+        """Create the Duplicate Names settings page and register it."""
+        self._dnc_extra = {
+            k: v for k, v in dnc.items()
+            if k not in ("enabled", "enabled_checks")
+        }
+
+        page = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(page)
+        form.setContentsMargins(16, 16, 16, 16)
+        form.setSpacing(10)
+
+        self.dnc_enabled_cb = QtWidgets.QCheckBox("Enable duplicate names check")
+        self.dnc_enabled_cb.setChecked(dnc.get("enabled", True))
+        form.addRow(self.dnc_enabled_cb)
+
+        enabled_checks = dnc.get("enabled_checks", {})
+
+        self.dnc_exact_cb = QtWidgets.QCheckBox("Check exact sibling duplicates")
+        self.dnc_exact_cb.setChecked(enabled_checks.get("exact_siblings", True))
+        self.dnc_exact_cb.setToolTip(
+            "Flag prims with identical names under the same parent. "
+            "Causes ambiguity in path queries."
+        )
+        form.addRow(self.dnc_exact_cb)
+
+        self.dnc_case_cb = QtWidgets.QCheckBox("Check case-only sibling duplicates")
+        self.dnc_case_cb.setChecked(enabled_checks.get("case_siblings", True))
+        self.dnc_case_cb.setToolTip(
+            "Flag sibling prims whose names differ only by capitalization. "
+            "Breaks on Windows and confuses artists."
+        )
+        form.addRow(self.dnc_case_cb)
+
+        self.dnc_cross_cb = QtWidgets.QCheckBox("Check cross-branch duplicates")
+        self.dnc_cross_cb.setChecked(enabled_checks.get("cross_branch", True))
+        self.dnc_cross_cb.setToolTip(
+            "Flag prim names that repeat many times across different parts of the scene. "
+            "May indicate uninstanced copies."
+        )
+        form.addRow(self.dnc_cross_cb)
+
+        sub_cbs = (self.dnc_exact_cb, self.dnc_case_cb, self.dnc_cross_cb)
+        for cb in sub_cbs:
+            cb.setEnabled(self.dnc_enabled_cb.isChecked())
+        self.dnc_enabled_cb.toggled.connect(self.dnc_exact_cb.setEnabled)
+        self.dnc_enabled_cb.toggled.connect(self.dnc_case_cb.setEnabled)
+        self.dnc_enabled_cb.toggled.connect(self.dnc_cross_cb.setEnabled)
+
+        self._list.addItem("Duplicate Names")
+        self._stack.addWidget(page)
+
+    def _build_empty_prims_check(self, epc):
+        """Create the Empty Prims settings page and register it."""
+        self._epc_extra = {
+            k: v for k, v in epc.items()
+            if k not in ("enabled", "enabled_checks")
+        }
+
+        page = QtWidgets.QWidget()
+        form = QtWidgets.QFormLayout(page)
+        form.setContentsMargins(16, 16, 16, 16)
+        form.setSpacing(10)
+
+        self.epc_enabled_cb = QtWidgets.QCheckBox("Enable empty prims check")
+        self.epc_enabled_cb.setChecked(epc.get("enabled", True))
+        form.addRow(self.epc_enabled_cb)
+
+        enabled_checks = epc.get("enabled_checks", {})
+
+        self.epc_xform_cb = QtWidgets.QCheckBox("Check empty Xform / Scope")
+        self.epc_xform_cb.setChecked(enabled_checks.get("empty_xform_scope", True))
+        self.epc_xform_cb.setToolTip(
+            "Flag Xform and Scope prims with no children or properties. "
+            "Usually leftover containers from deleted geometry."
+        )
+        form.addRow(self.epc_xform_cb)
+
+        self.epc_mesh_cb = QtWidgets.QCheckBox("Check empty Mesh")
+        self.epc_mesh_cb.setChecked(enabled_checks.get("empty_mesh", True))
+        self.epc_mesh_cb.setToolTip(
+            "Flag Mesh prims with no geometry data. "
+            "A Mesh with no points will render as nothing."
+        )
+        form.addRow(self.epc_mesh_cb)
+
+        self.epc_hier_cb = QtWidgets.QCheckBox("Check empty hierarchy")
+        self.epc_hier_cb.setChecked(enabled_checks.get("empty_hierarchy", True))
+        self.epc_hier_cb.setToolTip(
+            "Flag group prims whose entire subtree contains no meaningful geometry or materials."
+        )
+        form.addRow(self.epc_hier_cb)
+
+        sub_cbs = (self.epc_xform_cb, self.epc_mesh_cb, self.epc_hier_cb)
+        for cb in sub_cbs:
+            cb.setEnabled(self.epc_enabled_cb.isChecked())
+        self.epc_enabled_cb.toggled.connect(self.epc_xform_cb.setEnabled)
+        self.epc_enabled_cb.toggled.connect(self.epc_mesh_cb.setEnabled)
+        self.epc_enabled_cb.toggled.connect(self.epc_hier_cb.setEnabled)
+
+        self._list.addItem("Empty Prims")
+        self._stack.addWidget(page)
+
     def _build_naming_check(self, nc):
         """Create the Naming Check settings page and register it."""
         # Store JSON-only keys so get_settings() can round-trip them unchanged.
@@ -305,6 +410,24 @@ class SettingsDialog(QtWidgets.QDialog):
                     "internal_references": self.brc_int_cb.isChecked(),
                     "asset_paths": self.brc_asset_cb.isChecked(),
                     "unresolvable_paths": self.brc_env_cb.isChecked(),
+                },
+            },
+            "duplicate_names": {
+                **self._dnc_extra,
+                "enabled": self.dnc_enabled_cb.isChecked(),
+                "enabled_checks": {
+                    "exact_siblings": self.dnc_exact_cb.isChecked(),
+                    "case_siblings": self.dnc_case_cb.isChecked(),
+                    "cross_branch": self.dnc_cross_cb.isChecked(),
+                },
+            },
+            "empty_prims": {
+                **self._epc_extra,
+                "enabled": self.epc_enabled_cb.isChecked(),
+                "enabled_checks": {
+                    "empty_xform_scope": self.epc_xform_cb.isChecked(),
+                    "empty_mesh": self.epc_mesh_cb.isChecked(),
+                    "empty_hierarchy": self.epc_hier_cb.isChecked(),
                 },
             },
             "naming_check": {
